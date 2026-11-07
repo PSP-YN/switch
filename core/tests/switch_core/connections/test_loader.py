@@ -32,6 +32,7 @@ def test_shipped_catalog_enables_github_airtable_atlassian_datadog_and_google_wo
         "atlassian",
         "datadog",
         "google-workspace",
+        "linear",
     }
     assert [slug for slug, entry in CATALOG.items() if entry.definition.enabled] == [
         "airtable",
@@ -277,6 +278,7 @@ def test_the_shipped_linear_entry_uses_its_official_mcp_server_and_oauth():
     assert skill.startswith("---\\nname: linear\\n")
     assert "Read before writing" in skill
     assert "Never delete or archive" in skill
+
 
 def test_the_shipped_google_entry_offers_drive_file_without_restricted_scopes():
     entry = CATALOG["google-workspace"]
