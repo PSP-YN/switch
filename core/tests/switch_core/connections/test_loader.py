@@ -18,7 +18,6 @@ PLACEHOLDERS = {
     "microsoft-365",
     "new-relic",
     "notion",
-    "linear",
     "salesforce",
     "box",
     "canva",
@@ -40,12 +39,14 @@ def test_shipped_catalog_enables_github_airtable_atlassian_datadog_and_google_wo
         "datadog",
         "github",
         "google-workspace",
+        "linear",
     ]
     assert all(not CATALOG[slug].skill_files for slug in PLACEHOLDERS)
     assert "SKILL.md" in CATALOG["github"].skill_files
     assert "SKILL.md" in CATALOG["airtable"].skill_files
     assert "SKILL.md" in CATALOG["atlassian"].skill_files
     assert "SKILL.md" in CATALOG["google-workspace"].skill_files
+    assert "SKILL.md" in CATALOG["linear"].skill_files
 
 
 GOOGLE = "https://www.googleapis.com/auth/"
@@ -241,6 +242,41 @@ RESTRICTED_DRIVE = {
     "drive.scripts",
 }
 
+
+
+def test_the_shipped_linear_entry_uses_its_official_mcp_server_and_oauth():
+    definition = CATALOG["linear"].definition
+    oauth = definition.auth.oauth
+    assert oauth is not None
+    assert (definition.adapter, oauth.registration, oauth.redirect) == (
+        "oauth",
+        "dynamic",
+        ["loopback"],
+    )
+    assert oauth.revocation_discovered is True
+    assert definition.auth.refresh == "rotating"
+    assert definition.auth.identity is not None
+    assert definition.auth.identity.url.startswith("https://api.linear.app/graphql?query=")
+    assert (definition.auth.identity.account_id, definition.auth.identity.label) == (
+        "data.viewer.id",
+        "data.viewer.email",
+    )
+    assert definition.token is not None
+    assert (definition.token.kind, definition.token.max_lifetime) == (
+        "pass_through",
+        24 * 3600,
+    )
+    assert definition.mcp is not None
+    assert [(server.name, server.url) for server in definition.mcp.servers] == [
+        ("linear", "https://mcp.linear.app/mcp")
+    ]
+    assert definition.access is not None and definition.access.write is not None
+    assert definition.access.read.scopes == ["read", "openid", "email"]
+    assert definition.access.write.scopes == ["read", "write", "openid", "email"]
+    skill = CATALOG["linear"].skill_files["SKILL.md"]
+    assert skill.startswith("---\\nname: linear\\n")
+    assert "Read before writing" in skill
+    assert "Never delete or archive" in skill
 
 def test_the_shipped_google_entry_offers_drive_file_without_restricted_scopes():
     entry = CATALOG["google-workspace"]
